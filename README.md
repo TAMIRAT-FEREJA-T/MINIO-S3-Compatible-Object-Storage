@@ -3,11 +3,11 @@
 A high-performance, generic file service built with NestJS and MinIO.
 
 ## Features
-- **Universal File Support**: Upload any file type.
-- **Streaming**: Support for video playback and range requests (partial content).
-- **Multipart Upload**: Efficient handling of large files using Multer.
-- **Presigned URLs**: Secure, temporary access to files.
-- **Analytics**: Tracks upload/download counts, bandwidth usage, and last access time using SQLite.
+- **Secure File Storage**: Validates file content using "magic numbers" to ensure file type integrity (rejects spoofed extensions).
+- **Smart Streaming**: Dedicated `/stream` endpoint supporting byte-range requests for video/audio playback.
+- **Multipart Upload**: Efficient handling of large files (up to 550MB) using Multer.
+- **Presigned URLs**: Secure, temporary access to private files.
+- **Advanced Analytics**: Tracks upload/download counts, bandwidth usage, storage by MIME type, and last access time.
 - **Docker Ready**: Includes docker-compose for MinIO and the application.
 
 ## Prerequisites
@@ -46,27 +46,43 @@ A high-performance, generic file service built with NestJS and MinIO.
    npm run start:prod
    ```
 
+## Security
+- **File Validation**: Files are checked against a whitelist of allowed MIME types using binary signature verification (magic bytes).
+- **Filename Sanitization**: Original filenames are sanitized and prefixed with a UUID to prevent collisions and directory traversal attacks.
+- **Path Organization**: Files are stored in a `YYYY-MM-DD/category/` structure.
+
 ## API Endpoints
 
-### Upload File
-- **POST** `/file/upload`
+### File Operations
+
+#### POST `/file/upload`
 - **Body**: `multipart/form-data` with field `file`.
-- **Response**: JSON with filename, original name, size, url.
+- **Constraint**: Max file size 550MB.
+- **Response**: JSON with filename, original name, size, url, mimetype.
 
-### Download File
-- **GET** `/file/download/:filename`
-- **Headers**: Supports `Range` header for streaming.
+#### GET `/file/download/:filename`
+- **Description**: Standard download.
+- **Headers**: Sets `Content-Disposition: attachment`.
 
-### Delete File
-- **DELETE** `/file/:filename`
+#### GET `/file/stream/:filename`
+- **Description**: Stream media content.
+- **Headers**: Supports `Range` header. Sets `Content-Disposition` to `inline` for media types, enabling in-browser playback.
 
-### Generate Presigned URL
-- **POST** `/file/presigned-url`
+#### DELETE `/file/:filename`
+- **Description**: Permanently remove a file.
+
+#### POST `/file/presigned-url`
 - **Body**: `{ "filename": "example.jpg" }`
+- **Description**: Generate a temporary access URL.
 
-## Analytics
-Metadata is stored in `analytics.db` (SQLite). The system tracks:
-- File size distribution
-- Upload/download timestamps
-- Total bandwidth usage per file
-- Download counts
+### Analytics
+
+#### GET `/analytics/overview`
+- **Response**: `totalFiles`, `totalSize`, `totalBandwidth`.
+
+#### GET `/analytics/top-downloads`
+- **Query**: `?limit=5` (default 5).
+- **Response**: List of most downloaded files.
+
+#### GET `/analytics/storage-by-type`
+- **Response**: Break-down of used storage per MIME type.
