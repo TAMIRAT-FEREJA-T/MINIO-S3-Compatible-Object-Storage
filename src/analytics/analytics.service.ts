@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { FileAnalytics } from './analytics.entity';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class AnalyticsService {
@@ -14,6 +15,7 @@ export class AnalyticsService {
 
   async trackUpload(filename: string, originalName: string, mimetype: string, size: number) {
     const record = this.analyticsRepository.create({
+      id: uuidv4(),
       filename,
       originalName,
       mimetype,

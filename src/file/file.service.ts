@@ -6,7 +6,6 @@ import { BufferedFile } from 'src/minio/file.interface';
 import { v4 as uuidv4 } from 'uuid';
 import { fromBuffer } from 'file-type';
 import bold from 'chalk';
-import { not } from 'rxjs/internal/util/not';
 
 @Injectable()
 export class FileService {
